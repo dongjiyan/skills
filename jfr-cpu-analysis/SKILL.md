@@ -135,6 +135,19 @@ This flags:
 - Samples with `Formatter.parse` → `String.format()` internal regex on format
   string (consider pre-parsing or alternative)
 
+### Step 6b — Quick-Win Screen
+
+Scan the top-30 method list for these patterns. Any hit with ≥ 1% sample share is a 🍎 Quick Win — typically a one-line or one-field fix.
+
+| Pattern | Signal | Fix |
+|---------|--------|-----|
+| `Pattern.compile` / `Pattern.<init>` on hot path | regex compiled at runtime | declare `static final Pattern` constant |
+| `String.matches(...)` | compile + match on every call | same as above |
+| `Integer.valueOf` / `Long.valueOf` / `Double.valueOf` frequent | autoboxing overhead | use primitives or primitive arrays |
+| `SimpleDateFormat` construction on hot path | non-thread-safe, recreated per call | use `static final DateTimeFormatter` |
+| `Arrays.copyOf` / `Object.clone` frequent | unnecessary defensive copy | pass reference or `Collections.unmodifiableXxx` |
+| `Logger.debug/trace` argument construction visible | string concat without level guard | wrap with `if (log.isDebugEnabled())` |
+
 ### Step 7 — Write the report
 
 Produce a structured markdown report with these sections:
@@ -151,6 +164,9 @@ Produce a structured markdown report with these sections:
 - Root cause (1–2 sentences)
 - Specific code location (class + line number from stack)
 - Optimization recommendation
+
+### 🍎 Quick Wins
+Items flagged in Step 6b — each entry: pattern type / code location / estimated CPU release %
 
 ### Priority Fix List
 P0 / P1 / P2 items with estimated CPU release
