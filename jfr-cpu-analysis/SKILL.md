@@ -50,12 +50,17 @@ enabled. Stop and tell the user; they need to re-record with
 ### Step 2 — Export execution samples
 
 ```bash
-jfr print --events jdk.ExecutionSample "<path-to-file>.jfr" > /tmp/jfr_exec_samples.txt
+jfr print --events jdk.ExecutionSample --stack-depth 64 "<path-to-file>.jfr" > /tmp/jfr_exec_samples.txt
 ```
+
+**CRITICAL: Always pass `--stack-depth 64`.** The `jfr print` default is 5 frames, which silently
+truncates all stacks. With 5-frame stacks, high-level callers (e.g. `KafkaTableWriter.write`) are
+invisible in the output even though they account for 20%+ of CPU — the hot leaf methods are visible
+but cannot be attributed to their business parents. This causes completely wrong attribution.
 
 Optionally export native samples too:
 ```bash
-jfr print --events jdk.NativeMethodSample "<path-to-file>.jfr" > /tmp/jfr_native_samples.txt
+jfr print --events jdk.NativeMethodSample --stack-depth 64 "<path-to-file>.jfr" > /tmp/jfr_native_samples.txt
 ```
 
 ### Step 3 — Run the bundled analysis script
